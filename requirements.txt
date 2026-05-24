@@ -1,0 +1,10 @@
+playwright
+pandas
+openpyxl
+pyyaml
+beautifulsoup4
+lxml
+requests
+python-dateutil
+rich
+pytest

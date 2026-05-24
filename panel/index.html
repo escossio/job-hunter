@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>job-hunter panel</title>
+  <link rel="stylesheet" href="/style.css?v=cards-20260520-2" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-main">
+      <h1>job-hunter</h1>
+      <p id="panelSummary" class="meta">Carregando dados locais...</p>
+    </div>
+    <div class="topbar-actions">
+      <button id="refreshBtn" class="ghost compact">Atualizar</button>
+      <details class="tech-meta">
+        <summary>CSV</summary>
+        <p id="dataFile" class="meta meta-compact">Carregando dados locais...</p>
+      </details>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="summary-grid" id="summaryCards">
+      <article class="card summary-card accent-total" data-quick-filter="total" role="button" tabindex="0" aria-pressed="true"><span>Total geral</span><strong id="totalCount">0</strong></article>
+      <article class="card summary-card accent-new-today" data-quick-filter="newToday" role="button" tabindex="0" aria-pressed="false"><span>Novas hoje</span><strong id="countNewToday">0</strong></article>
+      <article class="card summary-card accent-new-run" data-quick-filter="newLastRun" role="button" tabindex="0" aria-pressed="false"><span>Novas da última coleta</span><strong id="countNewLastRun">0</strong></article>
+      <article class="card summary-card accent-high" data-quick-filter="high" role="button" tabindex="0" aria-pressed="false"><span>Alta aderência</span><strong id="countHigh">0</strong></article>
+      <article class="card summary-card accent-medium" data-quick-filter="medium" role="button" tabindex="0" aria-pressed="false"><span>Média aderência</span><strong id="countMedium">0</strong></article>
+      <article class="card summary-card accent-sent" data-quick-filter="sent" role="button" tabindex="0" aria-pressed="false"><span>Candidaturas enviadas</span><strong id="countSent">0</strong></article>
+      <article class="card summary-card accent-review" data-quick-filter="review" role="button" tabindex="0" aria-pressed="false"><span>Pendentes de revisão</span><strong id="countReview">0</strong></article>
+      <article class="card summary-card accent-block" data-quick-filter="block" role="button" tabindex="0" aria-pressed="false"><span>Não enviar</span><strong id="countBlock">0</strong></article>
+    </section>
+
+    <section class="panel filters" id="filtersPanel">
+      <button id="filtersToggle" class="filters-toggle" type="button" aria-expanded="false">
+        <span>Filtros</span>
+        <span id="filtersToggleCount" class="filters-count">0 ativos</span>
+      </button>
+      <div id="filtersBody" class="filters-body hidden">
+        <div class="filter-row">
+          <label>Texto livre <input id="filterText" type="search" placeholder="título, empresa, origem, motivos..." /></label>
+          <label>Origem <select id="filterOrigin"><option value="">Todas</option></select></label>
+          <label>Classificação <select id="filterClass"><option value="">Todas</option></select></label>
+          <label>Status <select id="filterStatus"><option value="">Todos</option></select></label>
+          <label>Modalidade <select id="filterModalidade"><option value="">Todas</option></select></label>
+        </div>
+        <div class="filter-row toggles">
+          <label><input id="onlyHigh" type="checkbox" /> somente Alta</label>
+          <label><input id="onlyUnreviewed" type="checkbox" /> somente não avaliadas</label>
+          <label><input id="onlySent" type="checkbox" /> somente candidatura enviada</label>
+          <label><input id="onlyReview" type="checkbox" /> somente revisar</label>
+          <label><input id="hideIgnore" type="checkbox" /> ocultar Ignorar</label>
+        </div>
+        <div class="filter-row">
+          <label>Ordenar por
+            <select id="sortBy">
+              <option value="priority_rank">prioridade final</option>
+              <option value="score_aderencia">score_aderencia</option>
+              <option value="classificacao">classificação</option>
+              <option value="origem">origem</option>
+              <option value="empresa">empresa</option>
+              <option value="titulo">título</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div id="jobsList" class="jobs-list"></div>
+    </section>
+  </main>
+
+  <div id="detailBackdrop" class="backdrop hidden"></div>
+  <aside id="detailPanel" class="detail-panel hidden" aria-hidden="true">
+    <div class="detail-header">
+      <div>
+        <p class="eyebrow">Detalhe da vaga</p>
+        <h2 id="detailTitle">Selecione uma vaga</h2>
+        <p id="detailSubtitle" class="meta"></p>
+      </div>
+      <button id="closeDetailBtn" class="ghost detail-back">Voltar</button>
+    </div>
+
+    <div class="detail-actions">
+      <button id="copySummaryBtn">Copiar resumo</button>
+      <a id="openOriginalBtn" class="primary-link" target="_blank" rel="noreferrer">Abrir vaga original</a>
+    </div>
+
+    <section class="detail-grid" id="detailGrid">
+      <div><span>Título</span><strong data-field="titulo"></strong></div>
+      <div><span>Empresa</span><strong data-field="empresa"></strong></div>
+      <div><span>Origem</span><strong data-field="origem"></strong></div>
+      <div><span>Classificação</span><strong data-field="classificacao"></strong></div>
+      <div><span>Score final</span><strong data-field="score_aderencia"></strong></div>
+      <div><span>Score bruto</span><strong data-field="score_bruto"></strong></div>
+      <div><span>Modalidade</span><strong data-field="modalidade"></strong></div>
+      <div><span>Localidade</span><strong data-field="localidade"></strong></div>
+      <div><span>Salário</span><strong data-field="salario"></strong></div>
+      <div><span>Regime</span><strong data-field="regime_contratacao"></strong></div>
+      <div><span>Nível</span><strong data-field="nivel"></strong></div>
+      <div><span>Status</span><strong data-field="status_candidatura"></strong></div>
+    </section>
+
+    <section class="detail-form">
+      <label>Status de candidatura
+        <select id="detailStatus"></select>
+      </label>
+      <label>Observações
+        <textarea id="detailObservacoes" rows="5" placeholder="Anotações da vaga"></textarea>
+      </label>
+      <div class="detail-save">
+        <button id="saveDetailBtn" class="primary">Salvar alterações</button>
+      </div>
+    </section>
+
+    <section class="detail-block">
+      <h3>Descrição</h3>
+      <p id="detailDescricao"></p>
+    </section>
+    <section class="detail-block">
+      <h3>Requisitos</h3>
+      <p id="detailRequisitos"></p>
+    </section>
+    <section class="detail-block">
+      <h3>Benefícios</h3>
+      <p id="detailBeneficios"></p>
+    </section>
+    <section class="detail-block">
+      <h3>Tags</h3>
+      <p id="detailTags"></p>
+    </section>
+    <section class="detail-block">
+      <h3>Motivos do score</h3>
+      <p id="detailMotivos"></p>
+    </section>
+    <section class="detail-block">
+      <h3>Link</h3>
+      <p id="detailLink"></p>
+    </section>
+  </aside>
+
+  <template id="jobCardTemplate">
+    <article class="job-card">
+      <div class="job-card-top">
+        <div class="job-card-rank">
+          <span class="job-card-score mono"></span>
+          <span class="badge job-card-badge"></span>
+        </div>
+        <div class="job-card-main">
+          <h2 class="job-card-title clamp-3"></h2>
+          <p class="job-card-meta clamp-2"></p>
+          <p class="job-card-motivo"><strong>Motivo curto:</strong> <span class="job-card-motivos-text clamp-2"></span></p>
+        </div>
+        <div class="job-card-actions">
+          <a class="open-link job-card-open" target="_blank" rel="noreferrer">Abrir vaga</a>
+          <button class="details-btn" type="button">Ver detalhes</button>
+          <button class="save-btn" type="button">Salvar</button>
+          <div class="job-card-controls">
+            <select class="status-select"></select>
+            <textarea class="observacoes-input compact-notes" rows="1" placeholder="Notas da vaga"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="job-card-details">
+        <div><strong>Resumo completo:</strong><p class="details-summary"></p></div>
+        <div><strong>Motivos completos:</strong><p class="details-motivos"></p></div>
+        <div><strong>Observações:</strong><p class="details-observacoes"></p></div>
+        <div><strong>Status:</strong><p class="details-status"></p></div>
+        <div><strong>Empresa / modalidade / localidade:</strong><p class="details-meta"></p></div>
+        <div><strong>Link:</strong><p class="details-link"></p></div>
+      </div>
+    </article>
+  </template>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <div id="confirmBackdrop" class="backdrop hidden"></div>
+  <aside id="confirmDialog" class="confirm-dialog hidden" aria-hidden="true">
+    <p class="eyebrow">Alterações não salvas</p>
+    <h2 id="confirmTitle">Deseja descartar as alterações realizadas?</h2>
+    <p id="confirmMessage" class="meta">As mudanças feitas no status ou nas observações ainda não foram salvas.</p>
+    <div class="confirm-actions">
+      <button id="confirmCancelBtn" class="ghost">Continuar editando</button>
+      <button id="confirmDiscardBtn" class="danger">Descartar alterações</button>
+    </div>
+  </aside>
+
+  <script src="/app.js?v=cards-20260520-2"></script>
+</body>
+</html>

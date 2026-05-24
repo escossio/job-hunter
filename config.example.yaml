@@ -1,0 +1,199 @@
+sources:
+  nerdin:
+    enabled: true
+    max_pages: 2
+    searches:
+      - keywords: "observabilidade"
+      - keywords: "monitoramento"
+      - keywords: "redes"
+      - keywords: "noc"
+      - keywords: "telecom"
+      - keywords: "zabbix"
+      - keywords: "grafana"
+      - keywords: "python"
+      - keywords: "linux"
+
+  apinfo:
+    enabled: true
+    max_pages: 2
+    searches:
+      - keywords: "observabilidade"
+      - keywords: "monitoramento"
+      - keywords: "redes"
+      - keywords: "noc"
+      - keywords: "infraestrutura"
+
+  remotar:
+    enabled: true
+    max_pages: 1
+    searches:
+      - keywords: "observabilidade"
+      - keywords: "infraestrutura"
+      - keywords: "python"
+      - keywords: "devops"
+
+  gupy:
+    enabled: true
+    max_pages: 1
+    searches:
+      - keywords: "observabilidade"
+      - keywords: "redes"
+      - keywords: "noc"
+      - keywords: "infraestrutura"
+
+  programathor:
+    enabled: false
+    max_pages: 1
+    searches:
+      - keywords: "python"
+      - keywords: "devops"
+
+  geekhunter:
+    enabled: false
+    max_pages: 1
+    searches:
+      - keywords: "devops"
+      - keywords: "infraestrutura"
+
+  trampos:
+    enabled: false
+    max_pages: 1
+    searches:
+      - keywords: "infraestrutura"
+      - keywords: "suporte"
+
+  indeed:
+    enabled: false
+    conservative_mode: true
+    max_pages: 1
+    searches:
+      - keywords: "analista observabilidade"
+        location: "Brasil"
+        remote: true
+      - keywords: "analista noc"
+        location: "Brasil"
+        remote: true
+
+  infojobs:
+    enabled: false
+    conservative_mode: true
+    max_pages: 1
+    searches:
+      - keywords: "analista de suporte ti"
+        location: "Brasil"
+        remote: true
+      - keywords: "analista infraestrutura"
+        location: "Brasil"
+        remote: true
+
+  manual_urls:
+    enabled: true
+    urls: []
+
+  linkedin:
+    enabled: false
+    login_manual: true
+    user_data_dir: "browser_profiles/linkedin"
+    max_pages: 1
+    searches:
+      - keywords: "Analista Observabilidade"
+        location: "Brasil"
+        remote: true
+      - keywords: "Zabbix Grafana"
+        location: "Brasil"
+        remote: true
+
+  revelo:
+    enabled: false
+    mode: "manual_profile_or_public_only"
+
+  catho:
+    enabled: false
+    mode: "public_only"
+
+  glassdoor:
+    enabled: false
+    mode: "public_only"
+
+  company_careers:
+    enabled: true
+    urls: []
+
+limits:
+  max_jobs_total: 120
+  max_jobs_per_source: 40
+  max_job_details: 30
+  delay_min_seconds: 2
+  delay_max_seconds: 6
+
+preferences:
+  remote_first: true
+  allow_presential: false
+  allow_hybrid: true
+  alta_requires_primary_fit: true
+  software_without_primary_max: "Média"
+  remotar_strict_software_filter: true
+
+profile_keywords_high:
+  - observabilidade
+  - monitoramento
+  - zabbix
+  - grafana
+  - prometheus
+  - noc
+  - redes
+  - telecom
+  - bgp
+  - ospf
+  - vlan
+  - linux
+  - python
+  - postgresql
+  - api
+  - automação
+  - infraestrutura
+  - cloudflare
+  - apache
+  - mqtt
+  - incidentes
+  - troubleshooting
+  - wireshark
+
+profile_keywords_medium:
+  - suporte
+  - sre
+  - devops
+  - dashboard
+  - alertas
+  - banco de dados
+  - shell
+  - segurança
+  - windows server
+  - active directory
+  - azure
+  - office 365
+  - suporte técnico
+  - service desk
+  - analista de ti
+  - analista de suporte
+
+negative_keywords:
+  - presencial obrigatório
+  - vendas externas
+  - telemarketing
+  - estágio
+  - primeiro emprego
+  - suporte nível 1 exclusivamente atendimento telefônico
+  - porta a porta
+
+export:
+  xlsx: true
+  csv: true
+  markdown_report: true
+
+safety:
+  no_auto_apply: true
+  no_captcha_bypass: true
+  no_password_storage: true
+  stop_on_block: true
+  public_pages_only_by_default: true

@@ -1,0 +1,20 @@
+{
+  "jobs": {
+    "link:https://example.com/vaga/123": {
+      "status_candidatura": "revisar",
+      "observacoes": "Separar requisitos essenciais antes de aplicar.",
+      "updated_at": "2026-05-24T10:00:00"
+    },
+    "codigo:EXEMPLO-456": {
+      "status_candidatura": "candidatura enviada",
+      "observacoes": "Processo acompanhado manualmente.",
+      "updated_at": "2026-05-24T10:05:00"
+    },
+    "hash:demo000000000001": {
+      "status_candidatura": "não avaliada",
+      "observacoes": "Registro fictício para demonstração.",
+      "updated_at": "2026-05-24T10:10:00"
+    }
+  }
+}
+
