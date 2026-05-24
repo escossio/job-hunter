@@ -76,6 +76,15 @@ jobs:
     notes: Vaga ficticia para exemplo.
 ```
 
+## Testes
+
+Para instalar dependências e executar os testes:
+
+```bash
+pip install -r requirements.txt
+python3 -m pytest -q
+```
+
 ## Estrutura de pastas
 
 - `panel/`: interface estática do painel;
