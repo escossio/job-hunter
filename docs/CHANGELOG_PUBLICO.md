@@ -1,0 +1,9 @@
+# CHANGELOG PUBLICO
+
+## Cadastro declarativo de vagas
+
+- Adicionado suporte a multiplas vagas via lista jobs.
+- Criado validador central em job_registry.py.
+- Adicionado suporte a job_key para rastreamento por vaga.
+- Atualizados exemplos ficticios em config.example.yaml e examples/.
+- Atualizada documentacao de cadastro de novas vagas.
