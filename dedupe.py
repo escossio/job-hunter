@@ -4,6 +4,10 @@ from typing import Any
 
 
 def _dedupe_key(job: dict[str, Any]) -> tuple[str, ...]:
+    job_key = str(job.get("job_key") or "").strip().lower()
+    if job_key:
+        return ("job_key", job_key)
+
     link = str(job.get("link") or "").strip().lower()
     if link:
         return ("link", link)

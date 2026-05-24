@@ -1,3 +1,28 @@
+jobs:
+  - id: analista-infra-exemplo
+    title: Analista de Infraestrutura
+    company: Empresa Exemplo A
+    platform: exemplo
+    url: https://example.com/vaga/123
+    enabled: true
+    tags:
+      - infraestrutura
+      - suporte
+      - redes
+    notes: Vaga ficticia para exemplo.
+
+  - id: sre-exemplo
+    title: Site Reliability Engineer
+    company: Empresa Exemplo B
+    platform: exemplo
+    url: https://example.com/vaga/456
+    enabled: true
+    tags:
+      - sre
+      - observabilidade
+      - linux
+    notes: Vaga ficticia para exemplo.
+
 sources:
   nerdin:
     enabled: true

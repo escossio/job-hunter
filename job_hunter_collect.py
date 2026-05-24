@@ -13,6 +13,7 @@ from rich.console import Console
 
 from dedupe import dedupe_jobs
 from exporters import export_csv, export_incremental_report, export_xlsx
+from job_registry import JobConfigError, collect_configured_jobs
 from normalizer import normalize_job
 from job_panel_server import job_key_for, latest_csv_file, _load_status_file, _merge_status
 from run_jobs import SOURCE_CLASSES, _source_metadata, load_source
@@ -164,12 +165,18 @@ def _collect_public_jobs(config: dict[str, Any], load_source_func: Callable[[str
         for job in collected:
             jobs.append(source.normalize_job(job))
 
+    configured_jobs, configured_metadata = collect_configured_jobs(config)
+    if configured_jobs:
+        jobs.extend(configured_jobs)
+        metadata["sources"][configured_metadata["name"]] = configured_metadata
+        metadata["raw_total"] += configured_metadata["raw_count"]
+
     normalized = [normalize_job(job) for job in jobs]
     unique_jobs = dedupe_jobs(normalized)
     metadata["deduped_total"] = len(unique_jobs)
     scored_jobs = [normalize_job(score_job(job, config)) for job in unique_jobs]
 
-    final_by_source: dict[str, int] = {}
+    final_by_source = {}
     for job in scored_jobs:
         source_name = str(job.get("origem") or "")
         final_by_source[source_name] = final_by_source.get(source_name, 0) + 1
@@ -307,7 +314,14 @@ def main(argv: list[str] | None = None) -> int:
 
     project_dir = Path(args.project_dir).resolve()
     console = Console()
-    result = build_incremental_collection(project_dir)
+    try:
+        result = build_incremental_collection(project_dir)
+    except JobConfigError as exc:
+        console.print(f"Erro de configuracao: {exc}")
+        return 1
+    except FileNotFoundError as exc:
+        console.print(f"Erro ao ler config.yaml: {exc}")
+        return 1
     console.print(f"Coleta incremental executada: {result['final_total']} vagas consolidadas.")
     console.print(f"CSV: {result['snapshot_csv']}")
     console.print(f"XLSX: {result['snapshot_xlsx']}")

@@ -35,6 +35,8 @@ Use nomes e URLs neutros, por exemplo:
 - `Pessoa Candidata`;
 - `https://example.com/vaga/123`.
 
+O arquivo `config.example.yaml` tambem pode conter uma lista `jobs` com exemplos ficticios para demonstrar o cadastro declarativo, sem usar URLs reais.
+
 ## Cuidados com browser_profiles
 
 - nunca copiar perfis de navegador com sessao ativa para o repositório publico;
@@ -46,4 +48,3 @@ Use nomes e URLs neutros, por exemplo:
 - não inserir segredos em documentação, exemplos ou comentários;
 - mascarar valores se algum campo precisar ser citado;
 - revisar qualquer arquivo exportado antes de publicar.
-

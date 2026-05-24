@@ -10,6 +10,7 @@ from rich.console import Console
 
 from dedupe import dedupe_jobs
 from exporters import export_csv, export_markdown_report, export_xlsx
+from job_registry import JobConfigError, collect_configured_jobs
 from normalizer import normalize_job
 from scoring import score_job
 
@@ -75,9 +76,7 @@ def _source_metadata(source_name: str, raw_count: int, source: Any) -> dict[str,
     }
 
 
-def main() -> int:
-    console = Console()
-    config = load_config()
+def _collect_public_jobs(config: dict[str, Any], load_source_func=load_source) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     jobs: list[dict[str, Any]] = []
     metadata: dict[str, Any] = {
         "started_at": datetime.now().isoformat(timespec="seconds"),
@@ -89,7 +88,7 @@ def main() -> int:
     for source_name, source_config in (config.get("sources") or {}).items():
         if not source_config or not source_config.get("enabled", False):
             continue
-        source = load_source(source_name)
+        source = load_source_func(source_name)
         try:
             collected = list(source.collect(source_config))
         except Exception as exc:  # pragma: no cover - defensive guard for isolated source failure
@@ -103,6 +102,27 @@ def main() -> int:
         metadata["raw_total"] += len(collected)
         for job in collected:
             jobs.append(source.normalize_job(job))
+
+    configured_jobs, configured_metadata = collect_configured_jobs(config)
+    if configured_jobs:
+        jobs.extend(configured_jobs)
+        metadata["sources"][configured_metadata["name"]] = configured_metadata
+        metadata["raw_total"] += configured_metadata["raw_count"]
+
+    return jobs, metadata
+
+
+def main() -> int:
+    console = Console()
+    try:
+        config = load_config()
+        jobs, metadata = _collect_public_jobs(config)
+    except JobConfigError as exc:
+        console.print(f"Erro de configuracao: {exc}")
+        return 1
+    except FileNotFoundError as exc:
+        console.print(f"Erro ao ler config.yaml: {exc}")
+        return 1
 
     normalized = [normalize_job(job) for job in jobs]
     unique_jobs = dedupe_jobs(normalized)

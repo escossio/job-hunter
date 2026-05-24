@@ -11,4 +11,4 @@
 - enriquecer a documentacao publica;
 - adicionar prints limpos e anonimizados;
 - criar exemplos adicionais para diferentes formatos de dado.
-
+- consolidar cadastro declarativo de vagas, fontes e URLs no `config.yaml`.

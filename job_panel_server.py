@@ -100,6 +100,10 @@ def _normalized_job_text(job: dict[str, Any]) -> str:
 
 
 def job_key_for(job: dict[str, Any]) -> str:
+    explicit_key = _safe_text(job.get("job_key")).strip()
+    if explicit_key:
+        return explicit_key
+
     link = _safe_text(job.get("link")).strip()
     if link:
         return f"link:{link.lower()}"

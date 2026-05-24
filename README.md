@@ -50,6 +50,32 @@ O painel expõe a interface em `http://127.0.0.1:8781` por padrão.
 
 `config.yaml` é um arquivo local. Para publicar no GitHub, mantenha apenas `config.example.yaml` e gere `config.yaml` na sua máquina.
 
+## Como cadastrar novas vagas
+
+1. Copie `config.example.yaml` para `config.yaml`.
+2. Adicione uma nova entrada na lista `jobs`.
+3. Preencha `id`, `title`, `company`, `platform` e `url`.
+4. Marque `enabled: true` para manter a vaga ativa.
+5. Rode o coletor ou reinicie o processo local conforme o seu fluxo.
+6. Abra o painel para revisar a vaga cadastrada.
+
+Exemplo:
+
+```yaml
+jobs:
+  - id: analista-infra-exemplo
+    title: Analista de Infraestrutura
+    company: Empresa Exemplo A
+    platform: exemplo
+    url: https://example.com/vaga/123
+    enabled: true
+    tags:
+      - infraestrutura
+      - suporte
+      - redes
+    notes: Vaga ficticia para exemplo.
+```
+
 ## Estrutura de pastas
 
 - `panel/`: interface estática do painel;
