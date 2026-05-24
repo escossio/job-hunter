@@ -50,6 +50,29 @@ O painel expõe a interface em `http://127.0.0.1:8781` por padrão.
 
 `config.yaml` é um arquivo local. Para publicar no GitHub, mantenha apenas `config.example.yaml` e gere `config.yaml` na sua máquina.
 
+## Autenticação do painel
+
+O painel usa HTTP Basic Auth.
+
+As credenciais devem ser configuradas por variáveis de ambiente:
+
+```bash
+export JOB_HUNTER_PANEL_USER="usuario-local"
+export JOB_HUNTER_PANEL_PASSWORD="senha-forte-local"
+```
+
+Opcionalmente, o painel também pode ler credenciais de um `config.yaml` local nao versionado.
+
+Nao coloque senha no código e nao versione `config.yaml`.
+
+Modo inseguro de desenvolvimento, apenas para uso local e explicitamente opt-in:
+
+```bash
+export JOB_HUNTER_PANEL_AUTH_DISABLED=true
+```
+
+Nao use esse modo em ambiente exposto.
+
 ## Como cadastrar novas vagas
 
 1. Copie `config.example.yaml` para `config.yaml`.

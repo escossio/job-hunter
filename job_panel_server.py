@@ -1,22 +1,32 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import csv
+import binascii
+import hmac
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from datetime import date, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 from urllib.parse import parse_qs, urlparse
+
+import yaml
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_DATA_DIR = PROJECT_DIR / "data" / "output"
 DEFAULT_PANEL_DIR = PROJECT_DIR / "panel"
 DEFAULT_STATUS_FILE = PROJECT_DIR / "data" / "status" / "job_status.json"
+DEFAULT_CONFIG_FILE = PROJECT_DIR / "config.yaml"
+AUTH_ENV_USER = "JOB_HUNTER_PANEL_USER"
+AUTH_ENV_PASSWORD = "JOB_HUNTER_PANEL_PASSWORD"
+AUTH_ENV_DISABLED = "JOB_HUNTER_PANEL_AUTH_DISABLED"
 STATUS_OPTIONS = [
     "não avaliada",
     "revisar",
@@ -68,6 +78,22 @@ def _safe_bool(value: Any) -> bool:
     return _safe_text(value).strip().lower() in {"1", "true", "yes", "sim", "y"}
 
 
+def _env_truthy(value: Any) -> bool:
+    return _safe_bool(value)
+
+
+def _load_yaml_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return data
+
+
 def _date_part(value: Any) -> str:
     text = _safe_text(value).strip()
     if not text:
@@ -114,6 +140,86 @@ def job_key_for(job: dict[str, Any]) -> str:
 
     digest = hashlib.sha1(_normalized_job_text(job).encode("utf-8")).hexdigest()
     return f"hash:{digest[:16]}"
+
+
+@dataclass(slots=True)
+class PanelAuthConfig:
+    auth_disabled: bool = False
+    username: str = ""
+    password: str = ""
+    source: str = "env"
+
+
+def load_panel_auth_config(
+    project_dir: Path = PROJECT_DIR,
+    environ: Mapping[str, str] | None = None,
+) -> PanelAuthConfig:
+    env = environ or os.environ
+    if _env_truthy(env.get(AUTH_ENV_DISABLED)):
+        return PanelAuthConfig(auth_disabled=True, source="env")
+
+    env_user_present = AUTH_ENV_USER in env
+    env_password_present = AUTH_ENV_PASSWORD in env
+    if env_user_present or env_password_present:
+        return PanelAuthConfig(
+            username=_safe_text(env.get(AUTH_ENV_USER)).strip(),
+            password=_safe_text(env.get(AUTH_ENV_PASSWORD)).strip(),
+            source="env",
+        )
+
+    config = _load_yaml_file(project_dir / "config.yaml")
+    panel_auth = config.get("panel_auth")
+    if isinstance(panel_auth, dict):
+        return PanelAuthConfig(
+            username=_safe_text(panel_auth.get("username") or panel_auth.get("user")).strip(),
+            password=_safe_text(panel_auth.get("password")).strip(),
+            source="config",
+        )
+
+    return PanelAuthConfig()
+
+
+def validate_panel_auth_config(auth_config: PanelAuthConfig) -> PanelAuthConfig:
+    if auth_config.auth_disabled:
+        return auth_config
+    if not auth_config.username or not auth_config.password:
+        raise RuntimeError(
+            "Autenticacao do painel exigida. Defina JOB_HUNTER_PANEL_USER e JOB_HUNTER_PANEL_PASSWORD "
+            "ou habilite JOB_HUNTER_PANEL_AUTH_DISABLED=true apenas em desenvolvimento local."
+        )
+    return auth_config
+
+
+def check_basic_auth(authorization: str | None, username: str, password: str) -> bool:
+    if not authorization:
+        return False
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "basic" or not token:
+        return False
+    try:
+        decoded = base64.b64decode(token.encode("ascii"), validate=True).decode("utf-8")
+    except (ValueError, UnicodeDecodeError, binascii.Error):
+        return False
+    if ":" not in decoded:
+        return False
+    provided_user, provided_password = decoded.split(":", 1)
+    return hmac.compare_digest(provided_user, username) and hmac.compare_digest(provided_password, password)
+
+
+def require_panel_auth(handler: BaseHTTPRequestHandler, auth_config: PanelAuthConfig) -> bool:
+    if auth_config.auth_disabled:
+        return True
+    authorization = handler.headers.get("Authorization")
+    if check_basic_auth(authorization, auth_config.username, auth_config.password):
+        return True
+    handler.send_response(HTTPStatus.UNAUTHORIZED)
+    handler.send_header("WWW-Authenticate", 'Basic realm="job-hunter-panel", charset="UTF-8"')
+    handler.send_header("Content-Type", "text/plain; charset=utf-8")
+    body = b"Authentication required\n"
+    handler.send_header("Content-Length", str(len(body)))
+    handler.end_headers()
+    handler.wfile.write(body)
+    return False
 
 
 def latest_csv_file(data_dir: Path = DEFAULT_DATA_DIR) -> Path | None:
@@ -280,6 +386,10 @@ class JobPanelHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
         return
 
+    @property
+    def auth_config(self) -> PanelAuthConfig:
+        return getattr(self.server, "panel_auth")  # type: ignore[return-value]
+
     def _serve_asset(self, relative_path: str) -> None:
         asset_path = (self.paths.panel_dir / relative_path).resolve()
         if not asset_path.exists() or self.paths.panel_dir.resolve() not in asset_path.parents and asset_path != self.paths.panel_dir.resolve():
@@ -293,6 +403,8 @@ class JobPanelHandler(BaseHTTPRequestHandler):
         _plain_response(self, asset_path.read_bytes(), mime_types.get(asset_path.suffix.lower(), "application/octet-stream"))
 
     def do_GET(self) -> None:  # noqa: N802
+        if not require_panel_auth(self, self.auth_config):
+            return
         parsed = urlparse(self.path)
         if parsed.path == "/":
             return self._serve_asset("index.html")
@@ -315,6 +427,8 @@ class JobPanelHandler(BaseHTTPRequestHandler):
         self.send_error(HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:  # noqa: N802
+        if not require_panel_auth(self, self.auth_config):
+            return
         parsed = urlparse(self.path)
         if parsed.path != "/api/job-status":
             self.send_error(HTTPStatus.NOT_FOUND)
@@ -348,9 +462,18 @@ class JobPanelHandler(BaseHTTPRequestHandler):
         _json_response(self, {"ok": True, "job_key": job_key, "status_candidatura": status, "observacoes": notes})
 
 
-def create_server(host: str, port: int, data_dir: Path = DEFAULT_DATA_DIR, panel_dir: Path = DEFAULT_PANEL_DIR, status_file: Path = DEFAULT_STATUS_FILE) -> ThreadingHTTPServer:
+def create_server(
+    host: str,
+    port: int,
+    data_dir: Path = DEFAULT_DATA_DIR,
+    panel_dir: Path = DEFAULT_PANEL_DIR,
+    status_file: Path = DEFAULT_STATUS_FILE,
+    auth_config: PanelAuthConfig | None = None,
+) -> ThreadingHTTPServer:
+    resolved_auth = validate_panel_auth_config(auth_config or load_panel_auth_config())
     server = ThreadingHTTPServer((host, port), JobPanelHandler)
     server.panel_paths = PanelPaths(data_dir=data_dir, panel_dir=panel_dir, status_file=status_file)  # type: ignore[attr-defined]
+    server.panel_auth = resolved_auth  # type: ignore[attr-defined]
     return server
 
 
@@ -363,12 +486,23 @@ def main() -> int:
     parser.add_argument("--status-file", default=str(DEFAULT_STATUS_FILE))
     args = parser.parse_args()
 
+    try:
+        auth_config = load_panel_auth_config()
+        if auth_config.auth_disabled:
+            print("AVISO: autenticacao do painel desativada explicitamente para desenvolvimento local.")
+        else:
+            validate_panel_auth_config(auth_config)
+    except RuntimeError as exc:
+        print(f"Erro de configuracao de autenticacao: {exc}")
+        return 1
+
     server = create_server(
         args.host,
         args.port,
         Path(args.data_dir),
         Path(args.panel_dir),
         Path(args.status_file),
+        auth_config=auth_config,
     )
     print(f"job-hunter panel ouvindo em http://{args.host}:{args.port}")
     try:

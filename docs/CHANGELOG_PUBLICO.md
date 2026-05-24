@@ -12,3 +12,10 @@
 
 - Adicionados testes automatizados para o cadastro declarativo de vagas.
 - Cobertura inicial para validação de jobs, job_key, enabled=false, campos obrigatórios e ids duplicados.
+
+## Autenticação do painel
+
+- Adicionado suporte a HTTP Basic Auth no painel.
+- Credenciais configuráveis por variáveis de ambiente.
+- Modo inseguro de desenvolvimento disponível apenas de forma explícita.
+- Adicionados testes automatizados para autenticação.
