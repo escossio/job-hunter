@@ -84,3 +84,7 @@ Este projeto não automatiza candidaturas, não burla CAPTCHA e não tenta conto
 - adicionar histórico de movimentações;
 - permitir arquivamento de vagas;
 - ampliar a documentação pública com prints limpos.
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.
