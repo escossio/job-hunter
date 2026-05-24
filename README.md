@@ -85,6 +85,14 @@ pip install -r requirements.txt
 python3 -m pytest -q
 ```
 
+A suíte mínima cobre:
+
+- validação declarativa de jobs;
+- geração de `job_key`;
+- campos obrigatórios;
+- ids duplicados;
+- `enabled=false`.
+
 ## Estrutura de pastas
 
 - `panel/`: interface estática do painel;
